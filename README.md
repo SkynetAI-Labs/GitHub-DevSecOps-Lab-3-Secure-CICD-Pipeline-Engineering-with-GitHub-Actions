@@ -1,6 +1,6 @@
-# Secure CI/CD Pipeline Engineering with GitHub Actions
+# GitHub DevSecOps Lab 3: Secure CI/CD Pipeline Engineering with GitHub Actions
 
-[![CI Pipeline](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/actions/workflows/ci.yml)
 
 A hands-on DevSecOps project by **SkynetAI-Labs**, demonstrating automated testing, security scanning, protected pull requests, and controlled container delivery.
 
@@ -60,8 +60,8 @@ Pull requests run the tests and security scans without publishing. On pushes to 
 
 An isolated demonstration branch introduced an unsafe eval() call without executing it. Bandit reported B307 with medium severity and high confidence, and the security job failed.
 
-- [Expected security failure](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/actions/runs/39068127558)
-- [Successful run after removing the unsafe example](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/actions/runs/39068386964)
+- [Expected security failure](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/actions/runs/39068127558)
+- [Successful run after removing the unsafe example](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/actions/runs/39068386964)
 
 The unsafe example was removed from the demonstration branch and was not merged into main.
 
@@ -69,15 +69,15 @@ The unsafe example was removed from the demonstration branch and was not merged 
 
 The initial Debian-based image scan reported 44 HIGH findings. The container base was changed to Python Alpine, available Alpine package updates were applied, and the existing scan policy was retained. The revised image passed the checks.
 
-- [Container build and remediation pull request](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/pull/2)
+- [Container build and remediation pull request](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/pull/2)
 
 ### Controlled delivery
 
 The main-branch workflow successfully ran unit tests, Bandit, and Trivy, then published the scanned image to GHCR.
 
-- [Successful delivery run](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/actions/runs/39071760350)
-- [Delivery implementation](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/pull/3)
-- [Action and runner maintenance](https://github.com/SkynetAI-Labs/secure-cicd-pipeline-github-actions/pull/4)
+- [Successful delivery run](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/actions/runs/39071760350)
+- [Delivery implementation](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/pull/3)
+- [Action and runner maintenance](https://github.com/SkynetAI-Labs/GitHub-DevSecOps-Lab-3-Secure-CICD-Pipeline-Engineering-with-GitHub-Actions/pull/4)
 
 ## Run the tests locally
 
