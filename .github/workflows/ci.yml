@@ -48,3 +48,31 @@ jobs:
 
       - name: Scan application code
         run: python -m bandit -r app
+
+  container:
+    name: Container security scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Build container image
+        run: docker build --pull -t secure-cicd-demo:${{ github.sha }} .
+
+      - name: Run container health check
+        run: docker run --rm secure-cicd-demo:${{ github.sha }}
+
+      - name: Scan container with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: secure-cicd-demo:${{ github.sha }}
+          scanners: vuln
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
