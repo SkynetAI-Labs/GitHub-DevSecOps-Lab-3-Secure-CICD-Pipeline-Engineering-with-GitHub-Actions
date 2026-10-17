@@ -1,12 +1,13 @@
-FROM python:3.12-slim
+FROM python:3.12-alpine3.23
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN groupadd --gid 10001 appuser \
-    && useradd --uid 10001 --gid appuser --no-create-home appuser
+RUN apk upgrade --no-cache \
+    && addgroup -S -g 10001 appuser \
+    && adduser -S -D -H -u 10001 -G appuser appuser
 
 COPY --chown=appuser:appuser app/ ./app/
 
