@@ -1,3 +1,5 @@
+![Lab 03 — Secure CI/CD Pipeline Engineering](skynet-lab-03.png)
+
 GitHub DevSecOps Lab 03 — Secure CI/CD Pipeline Engineering with GitHub Actions
 
 ""CI Pipeline" (https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/actions/workflows/ci.yml/badge.svg?branch=main)" (https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/actions/workflows/ci.yml)
