@@ -46,10 +46,10 @@ Pull requests run the tests and security scans without publishing. On pushes to 
 
 | Control | Implementation |
 |---|---|
-| Protected main branch | Pull requests and passing unit, code security, and container checks required |
+| Protected main branch | Pull requests, up-to-date branches, and passing unit, code security, container, and Gitleaks checks required |
 | Administrator enforcement | Branch protection configured to prevent bypassing |
 | Action version integrity | Direct workflow action references pinned to full commit SHAs |
-| Limited permissions | Read-only repository access by default; package write access limited to delivery |
+| Limited permissions | Read-only repository access by default; package, attestation, and OIDC write permissions limited to main-only delivery |
 | Checkout credentials | Credential persistence disabled |
 | Container execution | Application runs as an unprivileged user |
 | Vulnerability policy | Trivy fails on HIGH or CRITICAL findings, including unfixed findings |
@@ -138,7 +138,8 @@ Registry access depends on the package's visibility and permissions.
 lab-03-secure-cicd-pipeline/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml
+│       ├── ci.yml
+│       └── gitleaks.yml
 ├── app/
 │   └── health.py
 ├── tests/
@@ -158,7 +159,7 @@ A passing vulnerability scan means no findings matched the configured failure po
 
 Lower-severity vulnerabilities do not fail the container job.
 
-Action pins, scanner versions, base images, and vulnerability findings require ongoing maintenance. The base image uses a version tag rather than an immutable image digest.
+Action pins, scanner versions, base images, and vulnerability findings require ongoing maintenance. The base image is pinned by SHA-256 OCI index digest. Updates are manual and require reviewed pull requests and rescanning. Alpine packages are upgraded during builds, so the complete build is not fully reproducible.
 
 ## Skills Demonstrated
 
@@ -182,3 +183,32 @@ Action pins, scanner versions, base images, and vulnerability findings require o
 **Project:** Lab 03 — Secure CI/CD Pipeline Engineering
 
 Part of the [SkynetAI-Labs GitHub portfolio](https://github.com/SkynetAI-Labs).
+
+## Supply-Chain Security Evidence
+
+- Base image pinned to a verified multi-platform SHA-256 digest: [PR #12](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/pull/12).
+- CycloneDX SBOM generated from the scanned image, checked for container metadata and Alpine package inventory, and uploaded for 30 days: [PR #13](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/pull/13).
+- Signed provenance generated for the published registry digest and uploaded to GitHub and GHCR: [PR #14](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/pull/14).
+- Gitleaks archive checked against a pinned SHA-256 before extraction and installation: [PR #15](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/pull/15).
+
+Independent GitHub CLI attestation verification succeeded on 24 October 2026 for image digest:
+`sha256:d7254f216a0811d71a203be08d751c2ecb23dc8d6b437af2b9a50d954e30c76c`
+
+Verification enforced the expected repository, the exact ci.yml workflow on main, GitHub's OIDC issuer, GitHub-hosted runners and SLSA provenance v1.
+
+[Verified attestation](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/attestations/59317462)
+
+[Post-merge CI and publishing evidence](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/actions/runs/40054481052)
+
+[Post-merge Gitleaks checksum and scan evidence](https://github.com/SkynetAI-Labs/lab-03-secure-cicd-pipeline/actions/runs/40054481151)
+
+### Additional Limitations
+
+- SBOM content checks are not full CycloneDX schema validation.
+- Provenance verification establishes artifact identity and signed workflow claims; it does not prove application security or a particular SLSA assurance level.
+- The independently verified digest above identifies one historical image. Later images require separate verification.
+- Provenance generation follows publication; consumers should verify attestations before trusting images.
+- Branch protection requires PRs and four passing checks, but requires zero approving reviews.
+- Gitleaks is a separate required PR check. The publishing job directly waits on tests, Bandit and container checks, rather than the separate Gitleaks workflow.
+- Base images, action pins and scanner versions need manual maintenance. No automatic updater is configured.
+- Direct action SHA pins do not imply all transitive tools are checksum-pinned. Bandit's pip dependencies are not hash-locked.
