@@ -159,6 +159,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Download scanned image
@@ -182,6 +184,43 @@ jobs:
           IMAGE="ghcr.io/skynetai-labs/secure-cicd-pipeline-github-actions"
           docker tag "secure-cicd-demo:$COMMIT_SHA" "$IMAGE:$COMMIT_SHA"
           docker push "$IMAGE:$COMMIT_SHA"
+
+      - name: Resolve published image digest
+        id: published
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          IMAGE: ghcr.io/skynetai-labs/secure-cicd-pipeline-github-actions
+        run: |
+          docker pull "$IMAGE:$COMMIT_SHA"
+          docker image inspect "$IMAGE:$COMMIT_SHA" --format '{{json .RepoDigests}}' |
+            python3 -c '
+          import json
+          import os
+          import re
+          import sys
+
+          prefix = os.environ["IMAGE"] + "@"
+          digests = {
+              ref[len(prefix):]
+              for ref in json.load(sys.stdin)
+              if ref.startswith(prefix)
+          }
+          if len(digests) != 1:
+              raise SystemExit("Expected exactly one published image digest")
+          digest = digests.pop()
+          if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+              raise SystemExit("Invalid published image digest")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              print(f"digest={digest}", file=output)
+          print(f"Published image digest: {digest}")
+          '
+
+      - name: Attest published image provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ghcr.io/skynetai-labs/secure-cicd-pipeline-github-actions
+          subject-digest: ${{ steps.published.outputs.digest }}
+          push-to-registry: true
 
       - name: Sign out of registry
         if: always()
