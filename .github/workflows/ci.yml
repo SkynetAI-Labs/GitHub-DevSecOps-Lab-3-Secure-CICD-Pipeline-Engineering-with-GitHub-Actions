@@ -97,6 +97,46 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: false
 
+      - name: Generate CycloneDX SBOM
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: secure-cicd-demo:${{ github.sha }}
+          format: cyclonedx
+          output: container-sbom.cdx.json
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Verify SBOM contents
+        run: |
+          python3 - <<'CHECK'
+          import json
+          from pathlib import Path
+
+          sbom = json.loads(Path("container-sbom.cdx.json").read_text())
+          if sbom.get("bomFormat") != "CycloneDX":
+              raise SystemExit("Expected a CycloneDX SBOM")
+          if not sbom.get("specVersion"):
+              raise SystemExit("Missing CycloneDX specification version")
+          component = sbom.get("metadata", {}).get("component", {})
+          if component.get("type") != "container":
+              raise SystemExit("Missing container metadata")
+          components = sbom.get("components", [])
+          if not components:
+              raise SystemExit("SBOM contains no components")
+          if not any(c.get("purl", "").startswith("pkg:apk/") for c in components):
+              raise SystemExit("SBOM contains no Alpine package inventory")
+          print(f"Verified CycloneDX {sbom['specVersion']}: {len(components)} components")
+          CHECK
+
+      - name: Upload container SBOM
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: container-sbom-${{ github.sha }}
+          path: container-sbom.cdx.json
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Save scanned image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker save secure-cicd-demo:${{ github.sha }} -o scanned-image.tar
