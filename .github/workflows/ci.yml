@@ -1,3 +1,4 @@
+
 name: CI Pipeline
 
 on:
@@ -63,8 +64,27 @@ jobs:
       - name: Build container image
         run: docker build --pull -t secure-cicd-demo:${{ github.sha }} .
 
-      - name: Run container health check
-        run: docker run --rm secure-cicd-demo:${{ github.sha }}
+      - name: Verify container health status
+        env:
+          IMAGE_TAG: secure-cicd-demo:${{ github.sha }}
+        run: |
+          docker run --rm "$IMAGE_TAG" | python3 -c '
+          import ast
+          import sys
+          result = ast.literal_eval(sys.stdin.read().strip())
+          expected = {"status": "healthy", "service": "secure-cicd-demo"}
+          if result != expected:
+              raise SystemExit(f"Unexpected health status: {result!r}")
+          print("Container health status verified")
+          '
+
+      - name: Verify non-root container execution
+        env:
+          IMAGE_TAG: secure-cicd-demo:${{ github.sha }}
+        run: |
+          ACTUAL_UID="$(docker run --rm --entrypoint id "$IMAGE_TAG" -u)"
+          test "$ACTUAL_UID" = "10001"
+          echo "Verified container runtime UID: $ACTUAL_UID"
 
       - name: Scan container with Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
